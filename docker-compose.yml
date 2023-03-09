@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  web:
+    image: gorm2303/ba-web-application:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - uploader
+      - reader
+
+  uploader:
+    image: gorm2303/ba-video-uploader:latest
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+    volumes:
+      - video_data:/app/data
+
+  reader:
+    image: gorm2303/ba-video-reader:latest
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    volumes:
+      - video_data:/app/data
+
+  redis:
+    image: gorm2303/ba-video-cacher:latest
+    ports:
+      - "6379:6379"
+volumes:
+  video_data:
