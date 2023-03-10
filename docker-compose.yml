@@ -7,23 +7,19 @@ services:
       - "3000:3000"
     depends_on:
       - uploader
-      - reader
-    volumes:
-      - video_data:/app/data
+      - redis
 
   uploader:
     image: gorm2303/ba-video-uploader:latest
     ports:
-      - "5000:5000"
-    depends_on:
-      - redis
+      - "80:80"
+    volumes:
+      - video_data:/app/data
 
   reader:
     image: gorm2303/ba-video-reader:latest
     ports:
       - "8000:8000"
-    depends_on:
-      - redis
     volumes:
       - video_data:/app/data
 
@@ -31,5 +27,7 @@ services:
     image: gorm2303/ba-video-cacher:latest
     ports:
       - "6379:6379"
+    depends_on:
+      - reader
 volumes:
   video_data:
