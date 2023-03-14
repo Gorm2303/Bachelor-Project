@@ -5,6 +5,8 @@ services:
     image: gorm2303/ba-web-application:latest
     ports:
       - "3000:3000"
+    environment:
+      - REDIS_URL=http://cacher-api:8080/videometadata
     depends_on:
       - uploader
       - redis
@@ -29,8 +31,8 @@ services:
       - "8080:8080"
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - VIDEOS_URL=http://reader:5000/videos
-      - VIDEO_URL=http://reader:5000/videos/{id}
+      - VIDEOS_URL=http://reader:8000/videos
+      - VIDEO_URL=http://reader:8000/videos/{id}
     depends_on:
       - redis
       - reader
