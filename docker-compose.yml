@@ -6,12 +6,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - CACHER_URL=http://cacher-api:80/videometadata
-      - UPLOADER_URL=http://uploader:8080/api/v1/
-      - UPLOADER_VIDEOMETADATA_URL=http://uploader:8080/api/v1/videometadata
+      - REACT_APP_CACHER_VIDEOMETADATA_URL=http://localhost:80/videometadata
+      - REACT_APP_UPLOADER_URL=http://localhost:8080/api/v1/
+      - REACT_APP_UPLOADER_VIDEOMETADATA_URL=http://localhost:8080/api/v1/videometadata
     depends_on:
       - uploader
       - cacher-api
+    volumes:
+      - video_data:/app/src/app/data
 
   uploader:
     image: gorm2303/ba-video-uploader:latest
