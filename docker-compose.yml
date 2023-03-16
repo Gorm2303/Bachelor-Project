@@ -6,33 +6,34 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REDIS_URL=http://cacher-api:8080/videometadata
+      - CACHER_URL=http://cacher-api:80/videometadata
+      - UPLOADER_URL=http://uploader:8080/api/v1/
     depends_on:
       - uploader
-      - redis
+      - cacher-api
 
   uploader:
     image: gorm2303/ba-video-uploader:latest
     ports:
-      - "80:80"
+      - "8080:8080"
     volumes:
       - video_data:/app/data
 
   reader:
     image: gorm2303/ba-video-reader:latest
     ports:
-      - "8000:8000"
+      - "5000:5000"
     volumes:
       - video_data:/app/data
 
   cacher-api:
     image: gorm2303/ba-video-cacher:latest
     ports:
-      - "8080:8080"
+      - "80:80"
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - VIDEOS_URL=http://reader:8000/videos
-      - VIDEO_URL=http://reader:8000/videos/{id}
+      - VIDEOS_URL=http://reader:5000/videos
+      - VIDEO_URL=http://reader:5000/videos/{id}
     depends_on:
       - redis
       - reader
