@@ -13,7 +13,7 @@ services:
       - uploader
       - cacher-api
     volumes:
-      - video_data:/app/src/app/data
+      - video_data:/app/public/app/data
 
   uploader:
     image: gorm2303/ba-video-uploader:latest
