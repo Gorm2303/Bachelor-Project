@@ -8,6 +8,7 @@ services:
     environment:
       - CACHER_URL=http://cacher-api:80/videometadata
       - UPLOADER_URL=http://uploader:8080/api/v1/
+      - UPLOADER_VIDEOMETADATA_URL=http://uploader:8080/api/v1/videometadata
     depends_on:
       - uploader
       - cacher-api
