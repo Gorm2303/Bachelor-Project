@@ -4,7 +4,8 @@ services:
   web:
     image: gorm2303/ba-web-application:latest
     ports:
-      - "3000:3000"
+      - "80:80"
+      - "443:443"
     environment:
       - REACT_APP_CACHER_VIDEOMETADATA_URL=http://localhost:80/videometadata
       - REACT_APP_UPLOADER_URL=http://localhost:8080/api/v1/
@@ -32,7 +33,7 @@ services:
   cacher-api:
     image: gorm2303/ba-video-cacher:latest
     ports:
-      - "80:80"
+      - "8000:8000"
     environment:
       - REDIS_URL=redis://redis:6379/0
       - VIDEOS_URL=http://reader:5000/videos
