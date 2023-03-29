@@ -7,7 +7,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - REACT_APP_CACHER_VIDEOMETADATA_URL=http://localhost:80/videometadata
+      - REACT_APP_CACHER_VIDEOMETADATA_URL=http://localhost:8000/videometadata
       - REACT_APP_UPLOADER_URL=http://localhost:8080/api/v1/
       - REACT_APP_UPLOADER_VIDEOMETADATA_URL=http://localhost:8080/api/v1/videometadata
     depends_on:
