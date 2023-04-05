@@ -36,8 +36,8 @@ services:
       - "8000:8000"
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - VIDEOS_URL=http://reader:5000/videos
-      - VIDEO_URL=http://reader:5000/videos/{id}
+      - VIDEOS_URL=http://reader:5000/api/v1/videos
+      - VIDEO_URL=http://reader:5000/api/v1/videos/{id}
     depends_on:
       - redis
       - reader
