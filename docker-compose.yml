@@ -51,7 +51,23 @@ services:
       - "6379:6379"
     command: redis-server --save 60 1 --loglevel warning
 
+  mongodb:
+    image: mongo:latest
+    restart: always
+    container_name: mongodb
+    volumes:
+      - mongodb-volume:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo-js:ro
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: video_db
+
+
 volumes:
   video_data:
   redis_data:
+  mongodb-volume:
 
