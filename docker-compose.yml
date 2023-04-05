@@ -14,7 +14,7 @@ services:
       - uploader
       - cacher-api
     volumes:
-      - video_data:/app/public/app/data
+      - video_data:/usr/share/nginx/html/data
 
   uploader:
     image: gorm2303/ba-video-uploader:latest
