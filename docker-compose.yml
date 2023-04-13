@@ -21,7 +21,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - video_data:/app/data
+      - video_data:/data
 
   reader:
     image: gorm2303/ba-video-reader:latest
