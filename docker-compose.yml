@@ -1,62 +1,58 @@
-version: '3'
+version: '3.9'
 
 services:
   web:
-    image: gorm2303/ba-web-application:latest
+    build: ./Web-application/
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      - REACT_APP_CACHER_VIDEOMETADATA_URL=http://localhost:8000/videometadata
-      - REACT_APP_UPLOADER_URL=http://localhost:8080/api/v1/
-      - REACT_APP_UPLOADER_VIDEOMETADATA_URL=http://localhost:8080/api/v1/videometadata
     depends_on:
-      - uploader
-      - cacher-api
+      - video_uploader
+      - cacher
     volumes:
       - video_data:/usr/share/nginx/html/data
 
-  uploader:
-    image: gorm2303/ba-video-uploader:latest
-    ports:
-      - "8080:8080"
+  video_uploader:
+    build: ./Video-uploader/
+    expose:
+      - "8080"
     volumes:
       - video_data:/data
 
-  reader:
-    image: gorm2303/ba-video-reader:latest
-    ports:
-      - "5000:5000"
+  video_reader:
+    build: ./Video-reader/
+    expose:
+      - "5000"
     volumes:
       - video_data:/app/data
 
-  cacher-api:
-    image: gorm2303/ba-video-cacher:latest
-    ports:
-      - "8000:8000"
+  cacher:
+    build: ./Video-cacher/
+    expose:
+      - "80"
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - VIDEOS_URL=http://reader:5000/api/v1/videos
-      - VIDEO_URL=http://reader:5000/api/v1/videos/{id}
+      - VIDEOS_URL=http://video_reader:5000/api/v1/videos
+      - VIDEO_URL=http://video_reader:5000/api/v1/videos/{id}
     depends_on:
       - redis
-      - reader
+      - video_reader
   
   redis:
     image: redis:7.0.9-alpine
     restart: always
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     command: redis-server --save 60 1 --loglevel warning
 
-  mongodb:
+  mongo_videometadata:
     image: mongo:latest
     restart: always
-    container_name: mongodb
+    container_name: mongo_videometadata
     volumes:
-      - mongodb-volume:/data/db
+      - mongo_videometadata:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo-js:ro
     ports:
       - "27017:27017"
@@ -65,9 +61,63 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: root
       MONGO_INITDB_DATABASE: video_db
 
+  authenticator:
+    build: ./Authenticator/
+    restart: always
+    ports:
+      - "5000:80"
+    depends_on:
+      - mongo_users
+      - subscription
+      - cacher
+    environment:
+      MONGO_URI: "mongodb://root:root@mongo_users:27017"
+      TV2_EMAIL: "tv2@example.com"
+      TV2_PASSWORD: "password123"
+      SUBSCRIPTION_API_URL: "http://subscription:80"
+      CACHER_API_URL: "http://cacher:80"
+      UPLOADER_API_URL: 
+  
+  mongo_users:
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: usersdb
+    expose:
+      - "27017"
+    volumes:
+      - mongo_users:/data/db
 
+  subscription:
+    build: ./Subscription/
+    restart: always
+    expose:
+      - "80"
+    depends_on:
+      - mongo_subscriptions
+    environment:
+      MONGO_URI: "mongodb://root:root@mongo_subscriptions:27017"
+  
+  mongo_subscriptions:
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: subscriptiondb
+    expose:
+      - "27017"
+    volumes:
+      - mongo_subs:/data/db
+  
 volumes:
   video_data:
   redis_data:
-  mongodb-volume:
+  mongo_videometadata:
+  mongo_subs:
+  mongo_users:
+
+  
 
