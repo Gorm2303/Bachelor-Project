@@ -29,7 +29,7 @@ services:
   cacher:
     build: ./Video-cacher/
     expose:
-      - "80"
+      - "8000"
     environment:
       - REDIS_URL=redis://redis:6379/0
       - VIDEOS_URL=http://video_reader:5000/api/v1/videos
@@ -40,7 +40,6 @@ services:
   
   redis:
     image: redis:7.0.9-alpine
-    restart: always
     volumes:
       - redis_data:/data
     expose:
@@ -49,13 +48,12 @@ services:
 
   mongo_videometadata:
     image: mongo:latest
-    restart: always
     container_name: mongo_videometadata
     volumes:
       - mongo_videometadata:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo-js:ro
-    ports:
-      - "27017:27017"
+    expose:
+      - "27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
@@ -63,7 +61,6 @@ services:
 
   authenticator:
     build: ./Authenticator/
-    restart: always
     ports:
       - "5000:80"
     depends_on:
@@ -75,12 +72,11 @@ services:
       TV2_EMAIL: "tv2@example.com"
       TV2_PASSWORD: "password123"
       SUBSCRIPTION_API_URL: "http://subscription:80"
-      CACHER_API_URL: "http://cacher:80"
-      UPLOADER_API_URL: 
+      CACHER_API_URL: "http://cacher:8000"
+      UPLOADER_API_URL: "http://video_uploader:8080"
   
   mongo_users:
     image: mongo:latest
-    restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
@@ -92,7 +88,6 @@ services:
 
   subscription:
     build: ./Subscription/
-    restart: always
     expose:
       - "80"
     depends_on:
@@ -102,7 +97,6 @@ services:
   
   mongo_subscriptions:
     image: mongo:latest
-    restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
