@@ -6,6 +6,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    restart: always
     depends_on:
       - video_uploader
       - cacher
@@ -16,6 +17,11 @@ services:
     build: ./Video-uploader/
     expose:
       - "8080"
+    restart: always
+    depends_on:
+      - mongo_video
+    environment:
+      MONGO_URI: "mongodb://root:root@mongo_video:27017"
     volumes:
       - video_data:/data
 
@@ -23,13 +29,17 @@ services:
     build: ./Video-reader/
     expose:
       - "5000"
-    volumes:
-      - video_data:/app/data
+    restart: always
+    depends_on:
+      - mongo_video
+    environment:
+      MONGO_URI: "mongodb://root:root@mongo_video:27017"
 
   cacher:
     build: ./Video-cacher/
     expose:
       - "8000"
+    restart: always
     environment:
       - REDIS_URL=redis://redis:6379/0
       - VIDEOS_URL=http://video_reader:5000/api/v1/videos
@@ -44,20 +54,20 @@ services:
       - redis_data:/data
     expose:
       - "6379"
+    restart: always
     command: redis-server --save 60 1 --loglevel warning
 
-  mongo_videometadata:
+  mongo_video:
     image: mongo:latest
-    container_name: mongo_videometadata
-    volumes:
-      - mongo_videometadata:/data/db
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo-js:ro
-    expose:
-      - "27017"
+    restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
       MONGO_INITDB_DATABASE: video_db
+    expose:
+      - "27017"
+    volumes:
+      - mongo_video:/data/db 
 
   authenticator:
     build: ./Authenticator/
@@ -67,6 +77,7 @@ services:
       - mongo_users
       - subscription
       - cacher
+    restart: always
     environment:
       MONGO_URI: "mongodb://root:root@mongo_users:27017"
       TV2_EMAIL: "tv2@example.com"
@@ -83,6 +94,7 @@ services:
       MONGO_INITDB_DATABASE: usersdb
     expose:
       - "27017"
+    restart: always
     volumes:
       - mongo_users:/data/db
 
@@ -90,6 +102,7 @@ services:
     build: ./Subscription/
     expose:
       - "80"
+    restart: always
     depends_on:
       - mongo_subscriptions
     environment:
@@ -103,13 +116,14 @@ services:
       MONGO_INITDB_DATABASE: subscriptiondb
     expose:
       - "27017"
+    restart: always
     volumes:
       - mongo_subs:/data/db
   
 volumes:
   video_data:
   redis_data:
-  mongo_videometadata:
+  mongo_video:
   mongo_subs:
   mongo_users:
 
