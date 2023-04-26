@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: video-reader
+spec:
+  selector:
+    matchLabels:
+      app: video-reader
+  template:
+    metadata:
+      labels:
+        app: video-reader
+    spec:
+      containers:
+      - name: video-reader
+        image: mpa15/video-reader:1
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongo-video-0.mongo-video:27017,mongo-video-1.mongo-video:27017,mongo-video-2.mongo-video:27017/video_db?replicaSet=rs0"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: video-reader-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: video-reader
+spec:
+  selector:
+    app: video-reader
+  ports:
+    - protocol: TCP
+      port: 5000
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: video-reader-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: video-reader
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80

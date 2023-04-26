@@ -1,0 +1,4 @@
+rs.initiate({_id: "rs0",members: [{ _id: 0, host: "mongo-subscriptions-0.mongo-subscriptions:27017" },{ _id: 1, host: "mongo-subscriptions-1.mongo-subscriptions:27017" },{ _id: 2, host: "mongo-subscriptions-2.mongo-subscriptions:27017" }]})   
+kubectl apply -f .
+kubectl exec -it mongodb-subscriptions-0 -- mongosh
+minikube service <service-name> --url

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: video-uploader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: video-uploader
+  template:
+    metadata:
+      labels:
+        app: video-uploader
+    spec:
+      containers:
+      - name: video-uploader
+        image: mpa15/video-uploader:1
+        ports:
+        - containerPort: 8080
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongo-video-0.mongo-video:27017,mongo-video-1.mongo-video:27017,mongo-video-2.mongo-video:27017/video_db?replicaSet=rs0"
+        volumeMounts:
+        - name: video-data
+          mountPath: /data
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: video-data
+        persistentVolumeClaim:
+          claimName: web-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: video-uploader
+spec:
+  selector:
+    app: video-uploader
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: video-uploader-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: video-uploader
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+      

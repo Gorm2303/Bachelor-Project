@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-video
+spec:
+  clusterIP: None
+  selector:
+    app: mongo-video
+  ports:
+    - protocol: TCP
+      port: 27017
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo-video
+spec:
+  serviceName: mongo-video
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mongo-video
+  template:
+    metadata:
+      labels:
+        app: mongo-video
+    spec:
+      containers:
+      - name: mongo-video
+        image: mongo:latest
+        command:
+          - mongod
+          - "--replSet"
+          - rs0
+          - "--bind_ip"
+          - 0.0.0.0
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongo-video-data
+          mountPath: /data/db
+        readinessProbe:
+          tcpSocket:
+            port: 27017
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-video-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi  
