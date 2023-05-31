@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: authenticator
-        image: mpa15/authenticator:1
+        image: gorm2303/ba-authenticator:latest
         ports:
         - containerPort: 80
         env:

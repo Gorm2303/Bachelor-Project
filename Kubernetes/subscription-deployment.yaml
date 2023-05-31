@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: subscription
-        image: mpa15/subscription:1
+        image: gorm2303/ba-subscription:latest
         ports:
         - containerPort: 80
         env:

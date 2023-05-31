@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: cacher
-        image: mpa15/video-cacher:1
+        image: gorm2303/ba-video-cacher:latest
         ports:
         - containerPort: 8000
         env:
