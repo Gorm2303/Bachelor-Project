@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authenticator
+spec:
+  selector:
+    matchLabels:
+      app: authenticator
+  template:
+    metadata:
+      labels:
+        app: authenticator
+    spec:
+      containers:
+      - name: authenticator
+        image: gorm2303/ba-authenticator:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongo-users-0.mongo-users:27017,mongo-users-1.mongo-users:27017,mongo-users-2.mongo-users:27017/usersdb?replicaSet=rs0"
+        - name: TV2_EMAIL
+          value: "tv2@example.com"
+        - name: TV2_PASSWORD
+          value: "password123"
+        - name: SUBSCRIPTION_API_URL
+          value: "http://subscription:80"
+        - name: CACHER_API_URL
+          value: "http://cacher:8000"
+        - name: UPLOADER_API_URL
+          value: "http://video-uploader:8080"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: authenticator-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authenticator
+spec:
+  selector:
+    app: authenticator
+  ports:
+    - protocol: TCP
+      port: 80
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: auth-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: authenticator
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80

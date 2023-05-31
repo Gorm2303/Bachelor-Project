@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-subscriptions
+spec:
+  clusterIP: None
+  selector:
+    app: mongo-subscriptions
+  ports:
+    - protocol: TCP
+      port: 27017
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo-subscriptions
+spec:
+  serviceName: mongo-subscriptions
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mongo-subscriptions
+  template:
+    metadata:
+      labels:
+        app: mongo-subscriptions
+    spec:
+      containers:
+      - name: mongo-subscriptions
+        image: mongo:latest
+        command:
+          - mongod
+          - "--replSet"
+          - rs0
+          - "--bind_ip"
+          - 0.0.0.0
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongo-subscriptions-data
+          mountPath: /data/db
+        readinessProbe:
+          tcpSocket:
+            port: 27017
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-subscriptions-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi

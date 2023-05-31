@@ -1,0 +1,131 @@
+version: '3.9'
+
+services:
+  web:
+    image: gorm2303/ba-web-application:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+    depends_on:
+      - video_uploader
+      - cacher
+    volumes:
+      - video_data:/usr/share/nginx/html/data
+
+  video_uploader:
+    image: gorm2303/ba-video-uploader:latest
+    expose:
+      - "8080"
+    restart: always
+    depends_on:
+      - mongo_video
+    environment:
+      MONGO_URI: "mongodb://root:root@mongo_video:27017"
+    volumes:
+      - video_data:/data
+
+  video_reader:
+    image: gorm2303/ba-video-reader:latest
+    expose:
+      - "5000"
+    restart: always
+    depends_on:
+      - mongo_video
+    environment:
+      MONGO_URI: "mongodb://root:root@mongo_video:27017"
+
+  cacher:
+    image: gorm2303/ba-video-cacher:latest
+    expose:
+      - "8000"
+    restart: always
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - VIDEOS_URL=http://video_reader:5000/api/v1/videos
+      - VIDEO_URL=http://video_reader:5000/api/v1/videos/{id}
+    depends_on:
+      - redis
+      - video_reader
+  
+  redis:
+    image: redis:7.0.9-alpine
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+    restart: always
+    command: redis-server --save 60 1 --loglevel warning
+
+  mongo_video:
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: video_db
+    expose:
+      - "27017"
+    volumes:
+      - mongo_video:/data/db 
+
+  authenticator:
+    image: gorm2303/ba-authenticator:latest
+    ports:
+      - "5000:80"
+    depends_on:
+      - mongo_users
+      - subscription
+      - cacher
+    restart: always
+    environment:
+      MONGO_URI: "mongodb://root:root@mongo_users:27017"
+      TV2_EMAIL: "tv2@example.com"
+      TV2_PASSWORD: "password123"
+      SUBSCRIPTION_API_URL: "http://subscription:80"
+      CACHER_API_URL: "http://cacher:8000"
+      UPLOADER_API_URL: "http://video_uploader:8080"
+  
+  mongo_users:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: usersdb
+    expose:
+      - "27017"
+    restart: always
+    volumes:
+      - mongo_users:/data/db
+
+  subscription:
+    image: gorm2303/ba-subscription:latest
+    expose:
+      - "80"
+    restart: always
+    depends_on:
+      - mongo_subscriptions
+    environment:
+      MONGO_URI: "mongodb://root:root@mongo_subscriptions:27017"
+  
+  mongo_subscriptions:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: subscriptiondb
+    expose:
+      - "27017"
+    restart: always
+    volumes:
+      - mongo_subs:/data/db
+  
+volumes:
+  video_data:
+  redis_data:
+  mongo_video:
+  mongo_subs:
+  mongo_users:
+
+  
+

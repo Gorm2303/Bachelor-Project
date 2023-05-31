@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscription
+spec:
+  selector:
+    matchLabels:
+      app: subscription
+  template:
+    metadata:
+      labels:
+        app: subscription
+    spec:
+      containers:
+      - name: subscription
+        image: gorm2303/ba-subscription:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongo-subscriptions-0.mongo-subscriptions:27017,mongo-subscriptions-1.mongo-subscriptions:27017,mongo-subscriptions-2.mongo-subscriptions:27017/subscriptiondb?replicaSet=rs0"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: subscription-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: subscription
+spec:
+  selector:
+    app: subscription
+  ports:
+    - protocol: TCP
+      port: 80
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: subscription-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: subscription
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  

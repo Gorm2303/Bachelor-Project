@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cacher
+spec:
+  selector:
+    matchLabels:
+      app: cacher
+  template:
+    metadata:
+      labels:
+        app: cacher
+    spec:
+      containers:
+      - name: cacher
+        image: gorm2303/ba-video-cacher:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: REDIS_URL
+          value: redis://redis:6379/0
+        - name: VIDEOS_URL
+          value: http://video-reader:5000/api/v1/videos
+        - name: VIDEO_URL
+          value: http://video-reader:5000/api/v1/videos/{id}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: cacher-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cacher
+spec:
+  selector:
+    app: cacher
+  ports:
+    - protocol: TCP
+      port: 8000
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cacher-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cacher
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
